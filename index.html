@@ -1,0 +1,673 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>별다방 타이쿤</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Gowun+Dodum&display=swap">
+<style>
+/* Layout: one-screen cafe — HUD band on top, the counter with the queue in the middle, the bar station below. Single deliberate look (a warm cafe at night), not theme-switched. */
+:root{
+  --apron:#1f5f47;      /* barista apron green */
+  --apron-deep:#143f30;
+  --crema:#e9c896;      /* espresso crema */
+  --paper:#fbf6ec;      /* cup sleeve / receipt paper */
+  --roast:#2a1c14;      /* dark roast ink */
+  --oak:#7a4a2a;        /* counter wood */
+  --oak-light:#a26a40;
+  --wall:#ecdcc3;
+  --tomato:#c8463b;
+  --gold:#e3a72f;
+  --muted:#7b6a5c;
+  --display:"Jua","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --body:"Gowun Dodum","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",system-ui,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--roast);color:var(--roast);font-family:var(--body);font-size:15px;
+  -webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px}
+button{font-family:var(--display);cursor:pointer;border:0;color:inherit}
+button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+#app{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.num{font-variant-numeric:tabular-nums}
+
+/* HUD */
+.hud{background:var(--apron);color:var(--paper);border-radius:16px;padding:10px 14px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px}
+.brand{font-family:var(--display);font-size:22px;letter-spacing:.5px;display:flex;align-items:center;gap:8px;margin-right:auto}
+.brand .star{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--paper);color:var(--apron);font-size:20px}
+.brand small{font-family:var(--body);font-size:12px;opacity:.8;display:block;letter-spacing:0}
+.stat{display:flex;flex-direction:column;line-height:1.15}
+.stat span{font-size:11px;opacity:.75;letter-spacing:.06em}
+.stat b{font-family:var(--display);font-size:18px;font-weight:400}
+.clock{flex:1 1 160px;min-width:140px}
+.clock .track{height:8px;border-radius:8px;background:var(--apron-deep);overflow:hidden;margin-top:4px}
+.clock .track i{display:block;height:100%;width:0;background:var(--crema)}
+.hud .tools{display:flex;gap:6px}
+.iconbtn{background:var(--apron-deep);color:var(--paper);border-radius:10px;padding:7px 10px;font-size:14px}
+
+/* Store scene */
+.scene{position:relative;border-radius:18px;overflow:hidden;background:
+  linear-gradient(var(--wall),var(--wall)) top/100% 72% no-repeat,
+  repeating-linear-gradient(90deg,var(--oak) 0 38px,var(--oak-light) 38px 40px) bottom/100% 28% no-repeat;
+  min-height:250px;padding:14px 12px 0}
+.menuboard{position:absolute;top:10px;right:12px;background:var(--roast);color:var(--paper);border-radius:8px;padding:6px 10px;font-size:12px;line-height:1.5;max-width:46%;opacity:.92}
+.menuboard b{font-family:var(--display);font-weight:400;color:var(--crema)}
+.event{display:inline-block;background:var(--paper);border:2px dashed var(--apron);border-radius:999px;padding:3px 12px;font-size:13px;margin-bottom:8px}
+.queue{display:flex;gap:10px;align-items:flex-end;min-height:190px;flex-wrap:wrap;padding-bottom:12px}
+.empty{color:var(--muted);font-size:14px;padding:40px 6px}
+.cust{width:118px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;border-radius:14px;padding:6px 4px;animation:walkin .45s ease-out;border:2px solid transparent;background:transparent}
+.cust.sel{border-color:var(--apron);background:rgba(31,95,71,.08)}
+.cust.angry .face{animation:shake .4s}
+.bubble{background:var(--paper);border-radius:12px;padding:6px 8px;font-size:12px;text-align:center;line-height:1.3;position:relative;width:100%;box-shadow:0 2px 0 rgba(42,28,20,.15)}
+.bubble:after{content:"";position:absolute;bottom:-6px;left:50%;margin-left:-6px;border:6px solid transparent;border-bottom:0;border-top-color:var(--paper)}
+.bubble b{font-family:var(--display);font-weight:400;font-size:14px;display:block}
+.bubble .x{color:var(--tomato);font-size:11px}
+.face{font-size:46px;line-height:1;position:relative}
+.face .mood{position:absolute;right:-12px;top:-4px;font-size:20px}
+.pbar{width:84px;height:7px;background:rgba(42,28,20,.18);border-radius:6px;overflow:hidden}
+.pbar i{display:block;height:100%;width:100%;background:var(--apron);transition:background .3s}
+.float{position:absolute;font-family:var(--display);font-size:20px;pointer-events:none;animation:floatup 1.2s ease-out forwards;color:var(--apron);text-shadow:0 1px 0 var(--paper)}
+.float.bad{color:var(--tomato)}
+@keyframes walkin{from{transform:translateX(40px);opacity:0}to{transform:none;opacity:1}}
+@keyframes shake{0%,100%{transform:none}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+@keyframes floatup{from{transform:translateY(0);opacity:1}to{transform:translateY(-60px);opacity:0}}
+
+/* Bar station */
+.station{background:var(--paper);border-radius:18px;padding:12px;display:grid;grid-template-columns:minmax(260px,2fr) 3fr;gap:14px}
+@media (max-width:640px){.station{grid-template-columns:1fr}}
+.prep{display:flex;gap:12px;align-items:flex-start;min-width:0}
+@media (max-width:640px){.prep{justify-content:space-between}}
+.cupwrap{display:flex;flex-direction:column;align-items:center;gap:6px}
+.cup{width:78px;height:112px;border:4px solid var(--roast);border-top:0;border-radius:0 0 16px 16px;position:relative;display:flex;flex-direction:column-reverse;overflow:hidden;background:#fff;clip-path:polygon(0 0,100% 0,90% 100%,10% 100%)}
+.cup .layer{width:100%;flex:0 0 auto;border-top:1px solid rgba(0,0,0,.06);animation:pour .2s ease-out}
+@keyframes pour{from{transform:scaleY(0);transform-origin:bottom}to{transform:scaleY(1)}}
+.tray{font-size:28px;min-height:34px}
+.ticket{flex:1;min-width:0;background:#fff;border:1px dashed var(--muted);border-radius:6px;padding:8px 10px;font-size:13px}
+.ticket h4{margin:0 0 4px;font-family:var(--display);font-weight:400;font-size:17px}
+.ticket .who{color:var(--muted);font-size:12px}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.chip{border-radius:999px;padding:2px 8px;background:var(--wall);font-size:12px;white-space:nowrap}
+.chip.done{background:var(--apron);color:var(--paper)}
+.chip.over{background:var(--tomato);color:var(--paper)}
+.controls{display:flex;flex-direction:column;gap:10px;min-width:0}
+.ings{display:grid;grid-template-columns:repeat(auto-fill,minmax(82px,1fr));gap:8px}
+.ing{background:var(--wall);border-radius:12px;padding:8px 4px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:13px;box-shadow:0 3px 0 rgba(42,28,20,.25);transition:transform .06s}
+.ing:active{transform:translateY(3px);box-shadow:none}
+.ing .e{font-size:24px;line-height:1}
+.ing kbd{font-family:var(--body);font-size:10px;color:var(--muted)}
+.ing.food{background:#f3e3cf}
+.actions{display:flex;gap:8px}
+.btn{flex:1;border-radius:12px;padding:12px;font-size:17px;box-shadow:0 3px 0 rgba(42,28,20,.3)}
+.btn:active{transform:translateY(3px);box-shadow:none}
+.btn.serve{background:var(--apron);color:var(--paper);flex:2}
+.btn.trash{background:var(--wall)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+.help{color:var(--crema);font-size:12px;text-align:center;opacity:.8}
+
+/* Modals */
+.modal{position:fixed;inset:0;background:rgba(20,12,8,.7);display:grid;place-items:center;z-index:20;padding:16px}
+.card{background:var(--paper);border-radius:20px;max-width:520px;width:100%;max-height:calc(100% - 20px);overflow:auto;padding:22px}
+.card h2{font-family:var(--display);font-weight:400;font-size:28px;margin:0 0 6px;text-wrap:balance}
+.card p{line-height:1.6;margin:6px 0}
+.card .row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dotted var(--muted)}
+.card .row.total{font-family:var(--display);font-size:18px;border-bottom:0}
+.card .btns{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.card .btns .btn{min-width:140px}
+.title-hero{text-align:center}
+.title-hero .logo{width:96px;height:96px;border-radius:50%;background:var(--apron);color:var(--paper);display:grid;place-items:center;font-size:52px;margin:0 auto 10px;border:6px solid var(--crema)}
+.howto{background:var(--wall);border-radius:12px;padding:10px 14px;font-size:14px;text-align:left}
+.howto li{margin:3px 0}
+.shopitem{display:grid;grid-template-columns:38px 1fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px dotted var(--muted)}
+.shopitem .e{font-size:28px;text-align:center}
+.shopitem b{font-family:var(--display);font-weight:400;font-size:16px}
+.shopitem small{display:block;color:var(--muted);font-size:12px;line-height:1.4}
+.buy{background:var(--apron);color:var(--paper);border-radius:10px;padding:8px 10px;font-size:14px;white-space:nowrap}
+.buy:disabled{background:var(--muted);opacity:.6;cursor:not-allowed}
+.shophead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.tabs{display:flex;gap:6px;margin:10px 0 4px}
+.tab{background:var(--wall);border-radius:999px;padding:6px 14px;font-size:14px}
+.tab.on{background:var(--roast);color:var(--paper)}
+.recipe{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px dotted var(--muted);font-size:14px}
+.recipe span:last-child{white-space:nowrap}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--roast);color:var(--paper);padding:10px 16px;border-radius:999px;font-size:14px;z-index:30;border:2px solid var(--crema);transition:opacity .3s;pointer-events:none}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="hud">
+    <div class="brand"><span class="star" aria-hidden="true">★</span><div>별다방 타이쿤<small id="tier">동네 카페</small></div></div>
+    <div class="stat"><span>DAY</span><b class="num" id="day">1</b></div>
+    <div class="stat clock"><span id="clockLabel">영업 시간</span><div class="track"><i id="clockBar"></i></div></div>
+    <div class="stat"><span>잔고</span><b class="num" id="money">₩0</b></div>
+    <div class="stat"><span>평판</span><b class="num" id="rep">★3.0</b></div>
+    <div class="tools">
+      <button class="iconbtn" id="recipeBtn" title="레시피 북 (R)">📖 레시피</button>
+      <button class="iconbtn" id="muteBtn" title="소리">🔊</button>
+      <button class="iconbtn" id="pauseBtn" title="일시정지 (P)">⏸</button>
+    </div>
+  </header>
+
+  <section class="scene" id="scene">
+    <div class="event" id="eventTag">오늘: 평범한 하루</div>
+    <div class="menuboard" id="menuboard"></div>
+    <div class="queue" id="queue"></div>
+  </section>
+
+  <section class="station">
+    <div class="prep">
+      <div class="cupwrap">
+        <div class="cup" id="cup"></div>
+        <div class="tray" id="tray" aria-label="쟁반"></div>
+      </div>
+      <div class="ticket" id="ticket"></div>
+    </div>
+    <div class="controls">
+      <div class="ings" id="ings"></div>
+      <div class="actions">
+        <button class="btn trash" id="trashBtn">🗑 버리기 <small>(X)</small></button>
+        <button class="btn serve" id="serveBtn">☕ 서빙하기 <small>(Space)</small></button>
+      </div>
+    </div>
+  </section>
+  <div class="help">손님을 눌러 주문을 고르고, 재료를 담아 서빙하세요 · 키보드: 숫자=재료, ←/→=손님 선택, Space=서빙, X=버리기</div>
+</div>
+
+<div class="modal" id="modal"><div class="card" id="card"></div></div>
+<div class="toast" id="toast" style="opacity:0"></div>
+
+<script>
+(() => {
+'use strict';
+// ---------- data ----------
+const ING = {
+  shot:    {n:'에스프레소', e:'☕', c:'#3b2314', h:16},
+  water:   {n:'물',         e:'💧', c:'#bfe1f7', h:26},
+  milk:    {n:'우유',       e:'🥛', c:'#f6f0e2', h:26},
+  ice:     {n:'얼음',       e:'🧊', c:'#e2f4ff', h:18},
+  vanilla: {n:'바닐라',     e:'🌼', c:'#f3dc95', h:10},
+  caramel: {n:'카라멜',     e:'🍯', c:'#c7833a', h:10},
+  choco:   {n:'초코',       e:'🍫', c:'#5b3522', h:12},
+  matcha:  {n:'녹차',       e:'🍵', c:'#86b15d', h:16},
+  whip:    {n:'휘핑',       e:'🍦', c:'#fffdf6', h:16},
+};
+const ING_ORDER = Object.keys(ING);
+const MENU = [
+  {id:'americano', n:'아메리카노',       r:{shot:1,water:1},              p:4100},
+  {id:'iced',      n:'아이스 아메리카노', r:{shot:1,water:1,ice:1},        p:4100, iced:true},
+  {id:'latte',     n:'카페 라떼',        r:{shot:1,milk:1},               p:4600},
+  {id:'vlatte',    n:'바닐라 라떼',      r:{shot:1,milk:1,vanilla:1},     p:5100, cost:30000},
+  {id:'macchiato', n:'카라멜 마키아또',  r:{vanilla:1,milk:1,shot:1,caramel:1}, p:5600, cost:60000},
+  {id:'mocha',     n:'카페 모카',        r:{shot:1,choco:1,milk:1,whip:1}, p:5600, cost:90000},
+  {id:'matcha',    n:'녹차 라떼',        r:{matcha:1,milk:1,whip:1},      p:6100, cost:130000},
+  {id:'frappe',    n:'자바칩 프라페',    r:{choco:2,milk:1,ice:1,whip:1}, p:6300, cost:180000, iced:true},
+];
+const FOOD = {
+  croissant:{n:'크루아상',   e:'🥐', p:3900, cost:25000},
+  cake:     {n:'치즈케이크', e:'🍰', p:6200, cost:70000},
+  sandwich: {n:'샌드위치',   e:'🥪', p:5800, cost:110000},
+};
+const UPGRADES = {
+  beans:   {n:'고급 원두',   e:'🫘', max:5, base:40000, d:l=>`메뉴 가격 +10% (현재 +${l*10}%)`},
+  chairs:  {n:'푹신한 소파', e:'🛋', max:5, base:30000, d:l=>`손님 인내심 +15% (현재 +${l*15}%)`},
+  marketing:{n:'SNS 마케팅', e:'📣', max:5, base:35000, d:l=>`손님이 더 자주 와요 (Lv.${l})`},
+  expand:  {n:'매장 확장',   e:'🏗', max:3, base:80000, d:l=>`대기 줄 최대 ${4+l}명 → ${5+l}명`},
+  barista: {n:'바리스타 고용',e:'🧑‍🍳', max:3, base:100000, d:l=>`자동으로 음료를 만들어요. 일당 ₩${(15000).toLocaleString()}씩 (현재 ${l}명)`},
+};
+const EVENTS = [
+  {n:'평범한 하루 ☀️', w:4},
+  {n:'출근 러시 🏃 손님 많음', w:2, spawn:0.7},
+  {n:'비 오는 날 🌧 손님 적지만 느긋함', w:2, spawn:1.25, pat:1.25},
+  {n:'폭염 🔥 아이스 음료 인기, 가격 +10%', w:2, icedW:3, price:1.1},
+  {n:'인플루언서 방문 📸 평판 2배', w:1, repMul:2},
+];
+const TIERS = [[0,'동네 카페'],[300000,'인기 카페'],[1000000,'지역 명소'],[3000000,'체인 본점'],[10000000,'커피 제국']];
+const FACES = ['🧑','👩','👨','👵','👴','🧑‍💼','👩‍🎓','🧔','👱‍♀️','🧑‍🎨','👨‍🔧','👩‍💻','🧑‍🚀','👸','🤵'];
+const DAY_LEN = 100, CLOSE_GRACE = 20, SAVE_KEY = 'byeoldabang-tycoon-v1';
+
+// ---------- state ----------
+let S = null;
+const fresh = () => ({
+  day:1, money:30000, rep:3, total:0,
+  up:{beans:0,chairs:0,marketing:0,expand:0,barista:0},
+  menu:['americano','iced','latte'], food:[],
+  bestDay:0,
+});
+let D = null; // per-day runtime
+let running = false, paused = false, muted = false, selId = null, nextId = 1;
+let cup = [], tray = null;
+
+const $ = id => document.getElementById(id);
+const won = n => '₩' + Math.round(n).toLocaleString('ko-KR');
+const rand = (a,b) => a + Math.random()*(b-a);
+const pick = a => a[Math.floor(Math.random()*a.length)];
+const clamp = (v,a,b) => Math.max(a,Math.min(b,v));
+
+function save(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(S)); }catch(e){} }
+function load(){ try{ const t = localStorage.getItem(SAVE_KEY); return t ? JSON.parse(t) : null; }catch(e){ return null; } }
+function clearSave(){ try{ localStorage.removeItem(SAVE_KEY); }catch(e){} }
+
+// ---------- sound ----------
+let AC = null;
+function tone(f, d=0.09, type='sine', v=0.05, delay=0){
+  if (muted) return;
+  try{
+    AC = AC || new (window.AudioContext||window.webkitAudioContext)();
+    const t = AC.currentTime + delay, o = AC.createOscillator(), g = AC.createGain();
+    o.type = type; o.frequency.setValueAtTime(f, t);
+    g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0001, t+d);
+    o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t+d+0.02);
+  }catch(e){}
+}
+const sfx = {
+  add(){ tone(520+Math.random()*120,0.06,'triangle',0.04); },
+  ok(){ tone(660,0.1,'sine',0.06); tone(880,0.12,'sine',0.06,0.09); tone(1320,0.15,'sine',0.05,0.18); },
+  bad(){ tone(200,0.18,'sawtooth',0.04); },
+  bell(){ tone(1046,0.25,'sine',0.04); },
+  leave(){ tone(300,0.12,'square',0.03); tone(220,0.18,'square',0.03,0.1); },
+};
+
+// ---------- derived ----------
+const cap = () => 4 + S.up.expand;
+const priceMul = () => (1 + 0.1*S.up.beans) * (D.ev.price||1);
+const spawnInterval = () => 6.2 * Math.pow(0.87, S.up.marketing) * (1.3 - S.rep*0.1) * Math.max(0.7, 1 - 0.03*(S.day-1)) * (D.ev.spawn||1);
+const basePatience = () => 30 * (1 + 0.15*S.up.chairs) * Math.max(0.65, 1 - 0.035*(S.day-1)) * (D.ev.pat||1);
+const baristaInterval = () => 16 - 3*(S.up.barista-1);
+const rent = () => 15000 + 5000*(S.day-1);
+const wages = () => 15000*S.up.barista;
+const tierName = () => TIERS.filter(t => S.total >= t[0]).pop()[1];
+const upCost = k => UPGRADES[k].base * (S.up[k]+1);
+const neededIngs = () => ING_ORDER.filter(k => S.menu.some(id => MENU.find(m=>m.id===id).r[k]));
+
+// ---------- day flow ----------
+function startDay(){
+  const evs = S.day === 1 ? [EVENTS[0]] : EVENTS;
+  const tot = evs.reduce((s,e)=>s+e.w,0); let r = Math.random()*tot, ev = evs[0];
+  for (const e of evs){ r -= e.w; if (r <= 0){ ev = e; break; } }
+  D = {time:0, ev, spawnT:1.2, baristaT:0, served:0, lost:0, wrong:0, sales:0, tips:0, baristaServed:0, queue:[], closed:false};
+  D.baristaT = S.up.barista ? baristaInterval() : 0;
+  cup = []; tray = null; selId = null;
+  $('eventTag').textContent = '오늘: ' + ev.n;
+  renderAll();
+  hideModal();
+  running = true; paused = false;
+  sfx.bell();
+}
+
+function spawn(){
+  const opts = S.menu.map(id => MENU.find(m=>m.id===id));
+  const weights = opts.map(m => (m.iced && D.ev.icedW) ? D.ev.icedW : 1);
+  let r = Math.random()*weights.reduce((a,b)=>a+b,0), m = opts[0];
+  for (let i=0;i<opts.length;i++){ r -= weights[i]; if (r<=0){ m = opts[i]; break; } }
+  const req = {...m.r}; let extra = false;
+  if (m.r.shot && S.day >= 2 && Math.random() < 0.2){ req.shot += 1; extra = true; }
+  const food = (S.food.length && Math.random() < 0.35) ? pick(S.food) : null;
+  const nIng = Object.values(req).reduce((a,b)=>a+b,0) + (food?1:0);
+  const maxP = basePatience() + nIng*2.2;
+  const c = {id:nextId++, m, req, extra, food, p:maxP, maxP, face:pick(FACES)};
+  D.queue.push(c);
+  if (selId == null) selId = c.id;
+  renderQueue(); renderTicket();
+  tone(880,0.05,'sine',0.02);
+}
+
+function orderPrice(c){
+  let p = c.m.p + (c.extra?500:0) + (c.food?FOOD[c.food].p:0);
+  return p * priceMul();
+}
+
+function removeCust(c){
+  D.queue = D.queue.filter(x => x !== c);
+  if (selId === c.id) selId = D.queue.length ? D.queue[0].id : null;
+  renderQueue(); renderTicket();
+}
+
+function custEl(c){ return document.querySelector(`.cust[data-id="${c.id}"]`); }
+
+function floatText(c, text, bad){
+  const scene = $('scene'), el = custEl(c), f = document.createElement('div');
+  f.className = 'float' + (bad?' bad':''); f.textContent = text;
+  const sr = scene.getBoundingClientRect();
+  if (el){ const r = el.getBoundingClientRect(); f.style.left = (r.left - sr.left + 10) + 'px'; f.style.top = (r.top - sr.top + 40) + 'px'; }
+  else { f.style.left = '40%'; f.style.top = '40%'; }
+  scene.appendChild(f); setTimeout(()=>f.remove(), 1300);
+}
+
+function addRep(d){
+  if (d > 0) d *= (D.ev.repMul||1);
+  S.rep = clamp(S.rep + d, 0, 5);
+}
+
+function serve(){
+  if (!running || paused) return;
+  const c = D.queue.find(x => x.id === selId) || D.queue[0];
+  if (!c){ toast('주문한 손님이 없어요'); return; }
+  if (!cup.length && !tray){ toast('컵이 비어 있어요. 재료를 먼저 담으세요'); sfx.bad(); return; }
+  const counts = {}; cup.forEach(k => counts[k]=(counts[k]||0)+1);
+  const keys = new Set([...Object.keys(counts), ...Object.keys(c.req)]);
+  let ok = true; for (const k of keys) if ((counts[k]||0) !== (c.req[k]||0)) ok = false;
+  if ((tray||null) !== (c.food||null)) ok = false;
+  if (ok){
+    const ratio = c.p / c.maxP, price = orderPrice(c);
+    const tipRate = ratio > 0.66 ? 0.2 : ratio > 0.33 ? 0.1 : 0;
+    const tip = Math.round(price * tipRate * (0.5 + S.rep/6) / 100) * 100;
+    S.money += price + tip; S.total += price + tip; D.sales += price; D.tips += tip; D.served++;
+    addRep(ratio > 0.66 ? 0.06 : ratio > 0.33 ? 0.03 : 0.005);
+    floatText(c, '+' + won(price+tip) + (tip? ' 💝':''));
+    sfx.ok();
+    const el = custEl(c); if (el) el.querySelector('.mood').textContent = '😍';
+    setTimeout(()=>removeCust(c), 180);
+  } else {
+    c.p = Math.max(1, c.p - c.maxP*0.25); D.wrong++; addRep(-0.08);
+    floatText(c, '주문이랑 달라요!', true); sfx.bad();
+    const el = custEl(c); if (el){ el.classList.remove('angry'); void el.offsetWidth; el.classList.add('angry'); }
+  }
+  cup = []; tray = null; renderCup(); renderTicket();
+  renderHud();
+}
+
+function baristaServe(){
+  if (!D.queue.length) return;
+  // help the most impatient customer who is NOT the one the player is working on
+  const pool = D.queue.length > 1 ? D.queue.filter(c => c.id !== selId) : D.queue;
+  const c = pool.reduce((a,b) => (a.p < b.p ? a : b));
+  const price = orderPrice(c);
+  S.money += price; S.total += price; D.sales += price; D.served++; D.baristaServed++;
+  addRep(0.02);
+  floatText(c, '🧑‍🍳 +' + won(price));
+  tone(740,0.08,'triangle',0.04);
+  removeCust(c);
+}
+
+function custLeaves(c){
+  D.lost++; addRep(-0.2);
+  floatText(c, '😤 가버렸어요', true); sfx.leave();
+  removeCust(c);
+}
+
+function endDay(){
+  running = false;
+  // leftover customers after closing leave quietly
+  D.queue = []; selId = null; cup = []; tray = null;
+  renderQueue(); renderCup(); renderTicket();
+  const exp = rent() + wages();
+  S.money -= exp;
+  const net = D.sales + D.tips - exp;
+  S.bestDay = Math.max(S.bestDay||0, D.sales + D.tips);
+  const broke = S.money < 0;
+  showModal(`
+    <h2>${broke ? '💸 파산했어요…' : `☕ ${S.day}일차 영업 종료`}</h2>
+    <p>${D.ev.n}</p>
+    <div class="row"><span>서빙한 음료</span><b class="num">${D.served}잔${D.baristaServed?` (바리스타 ${D.baristaServed})`:''}</b></div>
+    <div class="row"><span>놓친 손님</span><b class="num">${D.lost}명</b></div>
+    <div class="row"><span>잘못 만든 음료</span><b class="num">${D.wrong}잔</b></div>
+    <div class="row"><span>매출</span><b class="num">${won(D.sales)}</b></div>
+    <div class="row"><span>팁</span><b class="num">${won(D.tips)}</b></div>
+    <div class="row"><span>임대료</span><b class="num">-${won(rent())}</b></div>
+    ${S.up.barista?`<div class="row"><span>바리스타 일당</span><b class="num">-${won(wages())}</b></div>`:''}
+    <div class="row total"><span>오늘 순이익</span><b class="num" style="color:${net<0?'var(--tomato)':'var(--apron)'}">${net<0?'-':'+'}${won(Math.abs(net))}</b></div>
+    <div class="row total"><span>잔고</span><b class="num">${won(S.money)}</b></div>
+    ${broke
+      ? `<p>잔고가 바닥났어요. ${S.day}일 동안 총 ${won(S.total)}을 벌었습니다.</p>
+         <div class="btns"><button class="btn serve" data-act="restart">처음부터 다시</button></div>`
+      : `<div class="btns"><button class="btn serve" data-act="shop">🛒 상점으로</button></div>`}
+  `);
+  if (broke) clearSave();
+  renderHud();
+}
+
+// ---------- shop ----------
+let shopTab = 'up';
+function openShop(){
+  const tabs = [['up','설비'],['menu','메뉴 개발'],['food','베이커리']];
+  let body = '';
+  if (shopTab === 'up'){
+    body = Object.entries(UPGRADES).map(([k,u]) => {
+      const l = S.up[k], maxed = l >= u.max, cost = upCost(k);
+      return `<div class="shopitem"><div class="e">${u.e}</div><div><b>${u.n} <span class="num">Lv.${l}/${u.max}</span></b><small>${u.d(l)}</small></div>
+        <button class="buy num" data-buy="up:${k}" ${maxed||S.money<cost?'disabled':''}>${maxed?'최대':won(cost)}</button></div>`;
+    }).join('');
+  } else if (shopTab === 'menu'){
+    body = MENU.filter(m => m.cost).map(m => {
+      const has = S.menu.includes(m.id);
+      const rec = Object.entries(m.r).map(([k,n]) => ING[k].e.repeat(n)).join(' ');
+      return `<div class="shopitem"><div class="e">${m.iced?'🥤':'☕'}</div><div><b>${m.n}</b><small>${rec} · 판매가 ${won(m.p)}</small></div>
+        <button class="buy num" data-buy="menu:${m.id}" ${has||S.money<m.cost?'disabled':''}>${has?'출시됨':won(m.cost)}</button></div>`;
+    }).join('');
+  } else {
+    body = Object.entries(FOOD).map(([k,f]) => {
+      const has = S.food.includes(k);
+      return `<div class="shopitem"><div class="e">${f.e}</div><div><b>${f.n}</b><small>음료와 함께 주문해요 · 판매가 ${won(f.p)}</small></div>
+        <button class="buy num" data-buy="food:${k}" ${has||S.money<f.cost?'disabled':''}>${has?'입고됨':won(f.cost)}</button></div>`;
+    }).join('');
+  }
+  showModal(`
+    <div class="shophead"><h2>🛒 상점</h2><b class="num">잔고 ${won(S.money)}</b></div>
+    <p style="color:var(--muted);font-size:13px">내일 임대료 ${won(15000+5000*S.day)}${S.up.barista?` · 바리스타 일당 ${won(wages())}`:''}가 영업 후 빠져나가요.</p>
+    <div class="tabs">${tabs.map(([k,n])=>`<button class="tab ${shopTab===k?'on':''}" data-tab="${k}">${n}</button>`).join('')}</div>
+    ${body}
+    <div class="btns"><button class="btn serve" data-act="next">☀️ ${S.day+1}일차 오픈</button></div>
+  `);
+}
+
+function buy(spec){
+  const [type, k] = spec.split(':');
+  let cost = 0;
+  if (type === 'up'){ cost = upCost(k); if (S.up[k] >= UPGRADES[k].max || S.money < cost) return; S.up[k]++; }
+  if (type === 'menu'){ const m = MENU.find(x=>x.id===k); cost = m.cost; if (S.menu.includes(k) || S.money < cost) return; S.menu.push(k); }
+  if (type === 'food'){ cost = FOOD[k].cost; if (S.food.includes(k) || S.money < cost) return; S.food.push(k); }
+  S.money -= cost; sfx.ok(); renderHud(); openShop();
+}
+
+// ---------- rendering ----------
+function renderHud(){
+  $('day').textContent = S.day;
+  $('money').textContent = won(S.money);
+  $('rep').textContent = '★' + S.rep.toFixed(1);
+  $('tier').textContent = tierName();
+}
+
+function renderMenuboard(){
+  $('menuboard').innerHTML = '<b>MENU</b><br>' + S.menu.map(id => {
+    const m = MENU.find(x=>x.id===id); return `${m.n} ${(m.p*priceMul()/1000).toFixed(1)}`;
+  }).join('<br>');
+}
+
+function renderQueue(){
+  const q = $('queue');
+  if (!D || !D.queue.length){
+    q.innerHTML = `<div class="empty">${D && D.closed ? '🔒 마감했어요. 남은 손님이 없네요.' : '손님을 기다리는 중… ☕'}</div>`;
+    return;
+  }
+  q.innerHTML = D.queue.map(c => `
+    <button class="cust ${c.id===selId?'sel':''}" data-id="${c.id}" aria-label="${c.m.n} 주문 손님">
+      <div class="bubble"><b>${c.m.n}</b>${c.extra?'<span class="x">샷 추가</span>':''}${c.food?` + ${FOOD[c.food].e}`:''}</div>
+      <div class="face">${c.face}<span class="mood">😊</span></div>
+      <div class="pbar"><i></i></div>
+    </button>`).join('');
+  updateBars();
+}
+
+function updateBars(){
+  if (!D) return;
+  for (const c of D.queue){
+    const el = custEl(c); if (!el) continue;
+    const r = c.p / c.maxP, bar = el.querySelector('.pbar i'), mood = el.querySelector('.mood');
+    bar.style.width = (r*100).toFixed(1) + '%';
+    bar.style.background = r > 0.66 ? 'var(--apron)' : r > 0.33 ? 'var(--gold)' : 'var(--tomato)';
+    if (mood.textContent !== '😍') mood.textContent = r > 0.66 ? '😊' : r > 0.33 ? '😐' : '😠';
+  }
+  const t = Math.min(D.time / DAY_LEN, 1);
+  $('clockBar').style.width = (t*100) + '%';
+  const hour = 7 + Math.floor(t*14), min = Math.floor((t*14 % 1)*60/10)*10;
+  $('clockLabel').textContent = D.closed ? '마감 (남은 손님 응대 중)' : `영업 시간 ${String(hour).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
+}
+
+function renderCup(){
+  const total = cup.reduce((s,k)=>s+ING[k].h,0), scale = total > 104 ? 104/total : 1;
+  $('cup').innerHTML = cup.map(k => `<div class="layer" style="height:${ING[k].h*scale}px;background:${ING[k].c}" title="${ING[k].n}"></div>`).join('');
+  $('tray').textContent = tray ? FOOD[tray].e : '';
+}
+
+function renderTicket(){
+  const c = D && (D.queue.find(x => x.id === selId) || D.queue[0]);
+  if (!c){ $('ticket').innerHTML = '<h4>주문서</h4><div class="who">손님이 오면 여기에 주문이 떠요.</div>'; return; }
+  const counts = {}; cup.forEach(k => counts[k]=(counts[k]||0)+1);
+  const chips = Object.entries(c.req).map(([k,n]) => {
+    const have = counts[k]||0, cls = have === n ? 'done' : have > n ? 'over' : '';
+    return `<span class="chip ${cls}">${ING[k].e} ${ING[k].n} ${have}/${n}</span>`;
+  });
+  Object.keys(counts).filter(k => !c.req[k]).forEach(k => chips.push(`<span class="chip over">${ING[k].e} ${ING[k].n} ✕</span>`));
+  if (c.food) chips.push(`<span class="chip ${tray===c.food?'done':''}">${FOOD[c.food].e} ${FOOD[c.food].n}</span>`);
+  else if (tray) chips.push(`<span class="chip over">${FOOD[tray].e} 주문 안 함 ✕</span>`);
+  $('ticket').innerHTML = `<h4>${c.m.n}${c.extra?' (샷 추가)':''}</h4><div class="who">${c.face} 손님 · ${won(orderPrice(c))}</div><div class="chips">${chips.join('')}</div>`;
+}
+
+function renderIngs(){
+  const ings = neededIngs();
+  let i = 0;
+  const html = ings.map(k => { i++; return `<button class="ing" data-ing="${k}"><span class="e">${ING[k].e}</span>${ING[k].n}<kbd>${i<=9?i:''}</kbd></button>`; });
+  const foodKeys = ['Q','W','E'];
+  S.food.forEach((k,j) => html.push(`<button class="ing food" data-food="${k}"><span class="e">${FOOD[k].e}</span>${FOOD[k].n}<kbd>${foodKeys[j]}</kbd></button>`));
+  $('ings').innerHTML = html.join('');
+}
+
+function renderAll(){ renderHud(); renderMenuboard(); renderIngs(); renderQueue(); renderCup(); renderTicket(); }
+
+// ---------- actions ----------
+function addIng(k){
+  if (!running || paused) return;
+  if (cup.length >= 8){ toast('컵이 가득 찼어요'); sfx.bad(); return; }
+  cup.push(k); sfx.add(); renderCup(); renderTicket();
+}
+function addFood(k){
+  if (!running || paused) return;
+  tray = tray === k ? null : k; sfx.add(); renderCup(); renderTicket();
+}
+function trash(){ if (!running) return; cup = []; tray = null; renderCup(); renderTicket(); }
+function selectCust(id){ selId = id; renderQueue(); renderTicket(); }
+function moveSel(d){
+  if (!D || !D.queue.length) return;
+  let i = D.queue.findIndex(c => c.id === selId); i = (i + d + D.queue.length) % D.queue.length;
+  selectCust(D.queue[i].id);
+}
+
+// ---------- modal / toast ----------
+function showModal(html){ $('card').innerHTML = html; $('modal').hidden = false; }
+function hideModal(){ $('modal').hidden = true; }
+let toastT = 0;
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.style.opacity = 1; clearTimeout(toastT); toastT = setTimeout(()=>t.style.opacity=0, 1600); }
+
+function showRecipes(){
+  const wasPaused = paused; if (running) paused = true;
+  showModal(`<h2>📖 레시피 북</h2><p style="color:var(--muted);font-size:13px">재료를 담는 순서는 상관없어요. 개수만 맞추면 됩니다. "샷 추가"는 에스프레소 한 번 더!</p>
+    ${S.menu.map(id => { const m = MENU.find(x=>x.id===id);
+      return `<div class="recipe"><span><b>${m.n}</b></span><span>${Object.entries(m.r).map(([k,n])=>`${ING[k].e}×${n}`).join(' ')}</span></div>`; }).join('')}
+    ${S.food.length?`<div class="recipe"><span><b>베이커리</b></span><span>${S.food.map(k=>FOOD[k].e+' '+FOOD[k].n).join(', ')}</span></div>`:''}
+    <div class="btns"><button class="btn serve" data-act="${wasPaused?'close':'resume'}">닫기</button></div>`);
+}
+
+function showPause(){
+  paused = true;
+  showModal(`<h2>⏸ 잠깐 쉬는 중</h2><p>${S.day}일차 · ${won(S.money)}</p>
+    <div class="btns"><button class="btn serve" data-act="resume">▶ 계속하기</button><button class="btn trash" data-act="quit">처음 화면</button></div>`);
+}
+
+function showTitle(){
+  running = false;
+  const saved = load();
+  showModal(`<div class="title-hero"><div class="logo">★</div><h2>별다방 타이쿤</h2>
+    <p>작은 동네 카페에서 시작해 커피 제국을 세워 보세요.</p></div>
+    <ul class="howto">
+      <li>손님을 눌러 주문을 고르면 아래 <b>주문서</b>에 레시피가 떠요.</li>
+      <li>재료 버튼으로 컵을 채우고 <b>서빙하기</b>! 빨리 낼수록 팁과 평판이 올라요.</li>
+      <li>인내심 막대가 다 닳으면 손님이 떠나고 평판이 깎여요.</li>
+      <li>영업이 끝나면 임대료를 내고, 상점에서 메뉴·설비·직원을 늘리세요.</li>
+    </ul>
+    <div class="btns">
+      ${saved?`<button class="btn serve" data-act="continue">▶ 이어하기 (${saved.day}일차 · ${won(saved.money)})</button>`:''}
+      <button class="btn ${saved?'trash':'serve'}" data-act="new">☕ 새 게임</button>
+    </div>`);
+}
+
+$('card').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.buy) return buy(b.dataset.buy);
+  if (b.dataset.tab){ shopTab = b.dataset.tab; return openShop(); }
+  switch (b.dataset.act){
+    case 'new': S = fresh(); save(); startDay(); break;
+    case 'continue': S = Object.assign(fresh(), load()); startDay(); break;
+    case 'shop': shopTab = 'up'; openShop(); break;
+    case 'next': S.day++; save(); startDay(); break;
+    case 'restart': S = fresh(); save(); startDay(); break;
+    case 'resume': paused = false; hideModal(); break;
+    case 'close': hideModal(); break;
+    case 'quit': showTitle(); break;
+  }
+});
+$('queue').addEventListener('click', e => { const c = e.target.closest('.cust'); if (c) selectCust(+c.dataset.id); });
+$('ings').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.ing) addIng(b.dataset.ing); else if (b.dataset.food) addFood(b.dataset.food);
+});
+$('serveBtn').addEventListener('click', serve);
+$('trashBtn').addEventListener('click', trash);
+$('recipeBtn').addEventListener('click', () => { if (S) showRecipes(); });
+$('pauseBtn').addEventListener('click', () => { if (running && !paused) showPause(); });
+$('muteBtn').addEventListener('click', () => { muted = !muted; $('muteBtn').textContent = muted ? '🔇' : '🔊'; });
+
+document.addEventListener('keydown', e => {
+  if (!running) return;
+  if (!$('modal').hidden){ if (e.key === 'Escape' && paused){ paused = false; hideModal(); } return; }
+  const k = e.key;
+  if (/^[1-9]$/.test(k)){ const ings = neededIngs(), ing = ings[+k-1]; if (ing) addIng(ing); }
+  else if ('qwe'.includes(k.toLowerCase()) && k.length === 1){ const f = S.food['qwe'.indexOf(k.toLowerCase())]; if (f) addFood(f); }
+  else if (k === ' ' || k === 'Enter'){ e.preventDefault(); serve(); }
+  else if (k === 'x' || k === 'X' || k === 'Backspace'){ trash(); }
+  else if (k === 'ArrowLeft') moveSel(-1);
+  else if (k === 'ArrowRight') moveSel(1);
+  else if (k === 'p' || k === 'P' || k === 'Escape') showPause();
+  else if (k === 'r' || k === 'R') showRecipes();
+});
+document.addEventListener('visibilitychange', () => { if (document.hidden && running && !paused) showPause(); });
+
+// ---------- loop ----------
+let last = performance.now();
+function update(dt){
+  D.time += dt;
+  if (D.time < DAY_LEN){
+    D.spawnT -= dt;
+    if (D.spawnT <= 0){
+      if (D.queue.length < cap()) spawn();
+      D.spawnT = spawnInterval() * rand(0.6, 1.4);
+    }
+  } else if (!D.closed){ D.closed = true; toast('🔒 마감 시간! 남은 손님만 응대하세요'); sfx.bell(); if (!D.queue.length) renderQueue(); }
+  for (const c of [...D.queue]){ c.p -= dt; if (c.p <= 0) custLeaves(c); }
+  if (S.up.barista && D.queue.length){
+    D.baristaT -= dt;
+    if (D.baristaT <= 0){ baristaServe(); D.baristaT = baristaInterval(); }
+  }
+  if (D.closed && (!D.queue.length || D.time >= DAY_LEN + CLOSE_GRACE)) endDay();
+  if (running) updateBars();
+  renderHud();
+}
+function frame(now){
+  const dt = Math.min(0.1, (now - last)/1000); last = now;
+  if (running && !paused && S && D) update(dt);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+// initial idle scene behind the title card
+S = fresh(); D = {time:0, ev:EVENTS[0], queue:[], closed:false}; renderAll();
+showTitle();
+})();
+</script>
+</body>
+</html>
