@@ -1,0 +1,133 @@
+/* Layout: one-screen store — HUD band on top, the counter with the queue in the middle, the bar station below. */
+:root{
+  --apron:#00704a;      /* Starbucks green */
+  --apron-deep:#1e3932;  /* house green */
+  --crema:#e9c896;      /* espresso crema */
+  --paper:#fbf6ec;      /* cup sleeve / receipt paper */
+  --roast:#2a1c14;      /* dark roast ink */
+  --oak:#7a4a2a;        /* counter wood */
+  --oak-light:#a26a40;
+  --wall:#ecdcc3;
+  --tomato:#c8463b;
+  --gold:#e3a72f;
+  --muted:#7b6a5c;
+  --display:"Jua","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --body:"Gowun Dodum","Apple SD Gothic Neo","Noto Sans KR","Malgun Gothic",system-ui,sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--roast);color:var(--roast);font-family:var(--body);font-size:15px;
+  -webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px}
+button{font-family:var(--display);cursor:pointer;border:0;color:inherit}
+button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+#app{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.num{font-variant-numeric:tabular-nums}
+
+/* HUD */
+.hud{background:var(--apron);color:var(--paper);border-radius:16px;padding:10px 14px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px}
+.brand{font-family:var(--display);font-size:22px;letter-spacing:.5px;display:flex;align-items:center;gap:8px;margin-right:auto}
+.brand .star{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--paper);color:var(--apron);font-size:20px}
+.brand small{font-family:var(--body);font-size:12px;opacity:.8;display:block;letter-spacing:0}
+.stat{display:flex;flex-direction:column;line-height:1.15}
+.stat span{font-size:11px;opacity:.75;letter-spacing:.06em}
+.stat b{font-family:var(--display);font-size:18px;font-weight:400}
+.clock{flex:1 1 160px;min-width:140px}
+.clock .track{height:8px;border-radius:8px;background:var(--apron-deep);overflow:hidden;margin-top:4px}
+.clock .track i{display:block;height:100%;width:0;background:var(--crema)}
+.hud .tools{display:flex;gap:6px}
+.iconbtn{background:var(--apron-deep);color:var(--paper);border-radius:10px;padding:7px 10px;font-size:14px}
+
+/* Store scene */
+.scene{position:relative;border-radius:18px;overflow:hidden;background:
+  linear-gradient(var(--wall),var(--wall)) top/100% 72% no-repeat,
+  repeating-linear-gradient(90deg,var(--oak) 0 38px,var(--oak-light) 38px 40px) bottom/100% 28% no-repeat;
+  min-height:250px;padding:14px 12px 0}
+.menuboard{position:absolute;top:10px;right:12px;background:var(--roast);color:var(--paper);border-radius:8px;padding:6px 10px;font-size:12px;line-height:1.5;max-width:46%;opacity:.92}
+.menuboard b{font-family:var(--display);font-weight:400;color:var(--crema)}
+.event{display:inline-block;background:var(--paper);border:2px dashed var(--apron);border-radius:999px;padding:3px 12px;font-size:13px;margin-bottom:8px}
+.queue{display:flex;gap:10px;align-items:flex-end;min-height:190px;flex-wrap:wrap;padding-bottom:12px}
+.empty{color:var(--muted);font-size:14px;padding:40px 6px}
+.cust{width:118px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;border-radius:14px;padding:6px 4px;animation:walkin .45s ease-out;border:2px solid transparent;background:transparent}
+.cust.sel{border-color:var(--apron);background:rgba(0,112,74,.08)}
+.face.shaking{animation:shake .4s}
+.cname{font-size:11px;color:var(--muted)}
+.bubble{background:var(--paper);border-radius:12px;padding:6px 8px;font-size:12px;text-align:center;line-height:1.3;position:relative;width:100%;box-shadow:0 2px 0 rgba(42,28,20,.15)}
+.bubble:after{content:"";position:absolute;bottom:-6px;left:50%;margin-left:-6px;border:6px solid transparent;border-bottom:0;border-top-color:var(--paper)}
+.bubble b{font-family:var(--display);font-weight:400;font-size:14px;display:block}
+.bubble .x{color:var(--tomato);font-size:11px}
+.face{font-size:46px;line-height:1;position:relative}
+.face .mood{position:absolute;right:-12px;top:-4px;font-size:20px}
+.pbar{width:84px;height:7px;background:rgba(42,28,20,.18);border-radius:6px;overflow:hidden}
+.pbar i{display:block;height:100%;width:100%;background:var(--apron);transition:background .3s}
+.float{position:absolute;font-family:var(--display);font-size:20px;pointer-events:none;animation:floatup 1.2s ease-out forwards;color:var(--apron);text-shadow:0 1px 0 var(--paper)}
+.float.bad{color:var(--tomato)}
+@keyframes walkin{from{transform:translateX(40px);opacity:0}to{transform:none;opacity:1}}
+@keyframes shake{0%,100%{transform:none}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+@keyframes floatup{from{transform:translateY(0);opacity:1}to{transform:translateY(-60px);opacity:0}}
+
+/* Bar station */
+.station{background:var(--paper);border-radius:18px;padding:12px;display:grid;grid-template-columns:minmax(260px,2fr) 3fr;gap:14px}
+@media (max-width:640px){.station{grid-template-columns:1fr}}
+.prep{display:flex;gap:12px;align-items:flex-start;min-width:0}
+@media (max-width:640px){.prep{justify-content:space-between}}
+.cupwrap{display:flex;flex-direction:column;align-items:center;gap:6px}
+.cup{width:78px;height:112px;border:4px solid var(--roast);border-top:0;border-radius:0 0 16px 16px;position:relative;display:flex;flex-direction:column-reverse;overflow:hidden;background:#fff;clip-path:polygon(0 0,100% 0,90% 100%,10% 100%)}
+.cup .layer{width:100%;flex:0 0 auto;border-top:1px solid rgba(0,0,0,.06);animation:pour .2s ease-out}
+@keyframes pour{from{transform:scaleY(0);transform-origin:bottom}to{transform:scaleY(1)}}
+.cuplogo{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);width:30px;height:30px;border-radius:50%;background:var(--apron);color:var(--paper);display:grid;place-items:center;font-size:16px;border:2px solid var(--paper);box-shadow:0 0 0 2px var(--apron)}
+.note{color:var(--muted);font-size:13px}
+.tray{font-size:28px;min-height:34px}
+.ticket{flex:1;min-width:0;background:#fff;border:1px dashed var(--muted);border-radius:6px;padding:8px 10px;font-size:13px}
+.ticket h4{margin:0 0 4px;font-family:var(--display);font-weight:400;font-size:17px}
+.ticket .who{color:var(--muted);font-size:12px}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.chip{border-radius:999px;padding:2px 8px;background:var(--wall);font-size:12px;white-space:nowrap}
+.chip.done{background:var(--apron);color:var(--paper)}
+.chip.over{background:var(--tomato);color:var(--paper)}
+.controls{display:flex;flex-direction:column;gap:10px;min-width:0}
+.ings{display:grid;grid-template-columns:repeat(auto-fill,minmax(82px,1fr));gap:8px}
+.ing{background:var(--wall);border-radius:12px;padding:8px 4px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:13px;box-shadow:0 3px 0 rgba(42,28,20,.25);transition:transform .06s}
+.ing:active{transform:translateY(3px);box-shadow:none}
+.ing .e{font-size:24px;line-height:1}
+.ing kbd{font-family:var(--body);font-size:10px;color:var(--muted)}
+.ing.food{background:#f3e3cf}
+.actions{display:flex;gap:8px}
+.btn{flex:1;border-radius:12px;padding:12px;font-size:17px;box-shadow:0 3px 0 rgba(42,28,20,.3)}
+.btn:active{transform:translateY(3px);box-shadow:none}
+.btn.serve{background:var(--apron);color:var(--paper);flex:2}
+.btn.trash{background:var(--wall)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+.help{color:var(--crema);font-size:12px;text-align:center;opacity:.8}
+
+/* Modals */
+.modal{position:fixed;inset:0;background:rgba(20,12,8,.7);display:grid;place-items:center;z-index:20;padding:16px}
+.card{background:var(--paper);border-radius:20px;max-width:520px;width:100%;max-height:calc(100% - 20px);overflow:auto;padding:22px}
+.card h2{font-family:var(--display);font-weight:400;font-size:28px;margin:0 0 6px;text-wrap:balance}
+.card p{line-height:1.6;margin:6px 0}
+.card .row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dotted var(--muted)}
+.card .row.total{font-family:var(--display);font-size:18px;border-bottom:0}
+.card .btns{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.card .btns .btn{min-width:140px}
+.title-hero{text-align:center}
+.title-hero .logo{width:96px;height:96px;border-radius:50%;background:var(--apron);color:var(--paper);display:grid;place-items:center;font-size:52px;margin:0 auto 10px;border:6px solid var(--crema)}
+.howto{background:var(--wall);border-radius:12px;padding:10px 14px;font-size:14px;text-align:left}
+.howto li{margin:3px 0}
+.shopitem{display:grid;grid-template-columns:38px 1fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px dotted var(--muted)}
+.shopitem .e{font-size:28px;text-align:center}
+.shopitem b{font-family:var(--display);font-weight:400;font-size:16px}
+.shopitem small{display:block;color:var(--muted);font-size:12px;line-height:1.4}
+.buy{background:var(--apron);color:var(--paper);border-radius:10px;padding:8px 10px;font-size:14px;white-space:nowrap}
+.buy:disabled{background:var(--muted);opacity:.6;cursor:not-allowed}
+.shophead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.tabs{display:flex;gap:6px;margin:10px 0 4px}
+.tab{background:var(--wall);border-radius:999px;padding:6px 14px;font-size:14px}
+.tab.on{background:var(--roast);color:var(--paper)}
+.recipe{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px dotted var(--muted);font-size:14px}
+.recipe span:last-child{white-space:nowrap}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--roast);color:var(--paper);padding:10px 16px;border-radius:999px;font-size:14px;z-index:30;border:2px solid var(--crema);transition:opacity .3s;pointer-events:none;max-width:calc(100% - 32px);text-align:center;animation:toastin .2s ease-out}
+@keyframes toastin{from{opacity:0;transform:translate(-50%,8px)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
