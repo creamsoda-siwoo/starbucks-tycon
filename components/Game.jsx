@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useReducer, useRef } from 'react';
+import Siren from '@/components/Siren';
 import { createEngine, won, menuById, ING, MENU, FOOD, UPGRADES, DAY_LEN } from '@/lib/engine';
 
 const FOOD_KEYS = ['Q', 'W', 'E'];
@@ -76,7 +77,7 @@ export default function Game() {
     <div id="app">
       <header className="hud">
         <div className="brand">
-          <span className="star" aria-hidden="true">★</span>
+          <span className="star"><Siren size={40} /></span>
           <div>스타벅스 타이쿤<small>{eng.tierName()}</small></div>
         </div>
         <div className="stat"><span>DAY</span><b className="num">{S.day}</b></div>
@@ -134,7 +135,7 @@ export default function Game() {
               {g.cup.map((k, i) => (
                 <div key={i} className="layer" title={ING[k].n} style={{ height: ING[k].h * cupScale, background: ING[k].c }} />
               ))}
-              <span className="cuplogo" aria-hidden="true">★</span>
+              <span className="cuplogo"><Siren size={34} /></span>
             </div>
             <div className="tray" aria-label="쟁반">{g.tray ? FOOD[g.tray].e : ''}</div>
           </div>
@@ -202,7 +203,7 @@ function Modal({ eng }) {
     return (
       <>
         <div className="title-hero">
-          <div className="logo">★</div>
+          <div className="logo"><Siren size={150} ring /></div>
           <h2>스타벅스 타이쿤</h2>
           <p>작은 동네 매장에서 시작해 글로벌 플래그십 스토어까지 키워 보세요.</p>
         </div>

@@ -29,7 +29,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 /* HUD */
 .hud{background:var(--apron);color:var(--paper);border-radius:16px;padding:10px 14px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px}
 .brand{font-family:var(--display);font-size:22px;letter-spacing:.5px;display:flex;align-items:center;gap:8px;margin-right:auto}
-.brand .star{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--paper);color:var(--apron);font-size:20px}
+.brand .star{display:block;width:40px;height:40px;border-radius:50%;box-shadow:0 0 0 2px var(--paper)}
 .brand small{font-family:var(--body);font-size:12px;opacity:.8;display:block;letter-spacing:0}
 .stat{display:flex;flex-direction:column;line-height:1.15}
 .stat span{font-size:11px;opacity:.75;letter-spacing:.06em}
@@ -77,7 +77,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 .cup{width:78px;height:112px;border:4px solid var(--roast);border-top:0;border-radius:0 0 16px 16px;position:relative;display:flex;flex-direction:column-reverse;overflow:hidden;background:#fff;clip-path:polygon(0 0,100% 0,90% 100%,10% 100%)}
 .cup .layer{width:100%;flex:0 0 auto;border-top:1px solid rgba(0,0,0,.06);animation:pour .2s ease-out}
 @keyframes pour{from{transform:scaleY(0);transform-origin:bottom}to{transform:scaleY(1)}}
-.cuplogo{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%);width:30px;height:30px;border-radius:50%;background:var(--apron);color:var(--paper);display:grid;place-items:center;font-size:16px;border:2px solid var(--paper);box-shadow:0 0 0 2px var(--apron)}
+.cuplogo{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);border-radius:50%;box-shadow:0 0 0 2px var(--paper)}
 .note{color:var(--muted);font-size:13px}
 .tray{font-size:28px;min-height:34px}
 .ticket{flex:1;min-width:0;background:#fff;border:1px dashed var(--muted);border-radius:6px;padding:8px 10px;font-size:13px}
@@ -113,7 +113,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 .card .btns{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
 .card .btns .btn{min-width:140px}
 .title-hero{text-align:center}
-.title-hero .logo{width:96px;height:96px;border-radius:50%;background:var(--apron);color:var(--paper);display:grid;place-items:center;font-size:52px;margin:0 auto 10px;border:6px solid var(--crema)}
+.title-hero .logo{width:150px;height:150px;margin:0 auto 10px;border-radius:50%;box-shadow:0 0 0 5px var(--paper),0 0 0 7px var(--apron)}
 .howto{background:var(--wall);border-radius:12px;padding:10px 14px;font-size:14px;text-align:left}
 .howto li{margin:3px 0}
 .shopitem{display:grid;grid-template-columns:38px 1fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px dotted var(--muted)}
